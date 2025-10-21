@@ -292,9 +292,9 @@ async fn log_report(report_request: web::Json<ReportLogRequest>) -> impl Respond
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("Starting Safex backend server at http://127.0.0.1:8080");
-    
-    HttpServer::new(|| {
+    let port: u16 = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string()).parse().unwrap_or(8080);
+    println!("Starting Safex backend server at http://0.0.0.0:{port}");
+    actix_web::HttpServer::new(|| {
         let cors = Cors::default()
             .allowed_origin("http://localhost:3000")
             .allowed_origin("http://localhost:3001")
@@ -312,7 +312,7 @@ async fn main() -> std::io::Result<()> {
             .service(fuzz_test)
             .service(log_report)
     })
-    .bind("127.0.0.1:8080")?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }
