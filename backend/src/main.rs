@@ -295,12 +295,13 @@ async fn main() -> std::io::Result<()> {
     let port: u16 = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string()).parse().unwrap_or(8080);
     println!("Starting Safex backend server at http://0.0.0.0:{port}");
     actix_web::HttpServer::new(|| {
-        let cors = Cors::default()
-            .allowed_origin("http://localhost:3000")
-            .allowed_origin("http://localhost:3001")
-            .allowed_methods(vec!["GET", "POST"])
-            .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
-            .max_age(3600);
+        // let cors = Cors::default()
+        //     .allowed_origin("http://localhost:3000")
+        //     .allowed_origin("http://localhost:3001")
+        //     .allowed_methods(vec!["GET", "POST"])
+        //     .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
+        //     .max_age(3600);
+        let cors = Cors::permissive();
             
         App::new()
             .wrap(cors)

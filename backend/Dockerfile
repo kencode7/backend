@@ -1,39 +1,44 @@
-# Use a Rust base image
+# Backend Dockerfile for Render deployment
+
 FROM rust:1.76-slim-bookworm as builder
 
-# Set the working directory
+# Install build dependencies required by native crates (openssl, libgit2, etc.)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    libssh2-1-dev \
+    zlib1g-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy Cargo.toml and Cargo.lock to leverage Docker cache
+# Copy the full backend project
 COPY Cargo.toml Cargo.lock ./
-
-# Build dependencies - this step is cached if Cargo.toml and Cargo.lock don't change
-RUN mkdir src && echo "fn main() {}" > src/main.rs && \
-    cargo build --release && rm -rf src
-
-# Copy the source code
 COPY src ./src
 
-# Build the release version of the application
+# Build the release binary
 RUN cargo build --release
 
 # --- Final stage ---
 FROM debian:bookworm-slim
 
-# Install OpenSSL and other necessary runtime dependencies
+# Minimal runtime deps
 RUN apt-get update && apt-get install -y \
-    libssl-dev \
     ca-certificates \
+    libssl3 \
+    libssh2-1 \
+    zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the compiled binary from the builder stage
+# Copy compiled binary
 COPY --from=builder /app/target/release/backend ./backend
 
-# Expose the port your Actix-web server listens on
+# Expose port (Render provides PORT env var)
 EXPOSE 8080
 
-# Set the entrypoint to run the compiled binary
+# Start server
 CMD ["./backend"]
